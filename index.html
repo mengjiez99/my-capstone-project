@@ -1,57 +1,277 @@
----
-layout: page
-title: My Data Science Project Page
-subtitle: Predictive Analytics for predicting tomorrow's winning lottery numbers.
-bigimg: /img/path.jpg
----
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="main-explain-area jumbotron">
-  <p>This website is powered by GitHub Pages/Jekyll and can be built in <strong>under 5 minutes</strong>. Literally.</p>
-  <p>The "Get started!" button below will take you to documentation about the Beautiful Jekyll theme.</p>
-  <div class="get-started-wrap">
-    <a class="btn btn-success btn-lg get-started-btn" href="https://github.com/daattali/beautiful-jekyll#readme">Get Started!</a>
-  </div>
-  <p>Designed to look great on both desktops and mobile devices.</p>
-  <p>Below are sample blog posts for illustration purposes.</p>
-</div>
+  <head>
 
-<div class="posts-list">
-  {% for post in paginator.posts %}
-  <article class="post-preview">
-    <a href="{{ post.url | prepend: site.baseurl }}">
-	  <h2 class="post-title">{{ post.title }}</h2>
-	
-	  {% if post.subtitle %}
-	  <h3 class="post-subtitle">
-	    {{ post.subtitle }}
-	  </h3>
-	  {% endif %}  
-    </a>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
-    <p class="post-meta">
-      Posted on {{ post.date | date: "%B %-d, %Y" }}
-    </p>
-  
-    <div class="post-entry">
-      {{ post.content | truncatewords: 50 | strip_html | xml_escape}}
-	  <a href="{{ post.url | prepend: site.baseurl }}" class="post-read-more">Read More</a>
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/resume.min.css" rel="stylesheet">
+
+    <script src="//d3js.org/d3.v4.min.js"></script>
+
+    
+
+    <style>
+
+        .area {
+          fill: none;
+          stroke: #18B284;
+          stroke-width: 1.5px;
+          clip-path: url(#clip);
+        }
+
+        .area_p {
+          fill: none;
+          stroke: #FF8A33;
+          stroke-width: 1.5px;
+          clip-path: url(#clip);
+        }
+
+        .zoom {
+          cursor: move;
+          fill: none;
+          pointer-events: all;
+        }
+
+
+    </style>
+
+  </head>
+
+  <body id="page-top ">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top" id="sideNav">
+      <a class="navbar-brand js-scroll-trigger" href="#page-top">
+        <span class="d-block d-lg-none">Project</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="#page1">Overview</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="#page2">Model Visualization</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="#page4">Conclusion </a>
+            </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container-fluid p-0">
+      <section class="resume-section p-3 p-lg-5 d-flex d-column" id="page1">
+        <div class="my-auto">
+          <h2 class="mb-0">LSTM network visualization for PM2.5 in five Chinese cities</h2>
+          <h7 class="mb-5">DATS 6501 Data Science Capstone -- Mengjie Zhang</h7>
+          <hr class="m-4">
+          <h6>Project Overview</h6>
+          <p class="mb-9"> China has been facing challenging air pollution in recent decades due to high consumption of energy. PM2.5 is one of the major components of air pollution and is known associated with frequently occurring smog events in many cities of China. This project has taken two different time-series approaches to predict PM2.5 in five Chinese cities. The results have showed that LSTM network has outperformed the Bayesian Model according to RMSE calculated from model prediction. This site is to visualize the model prediction from LSTM network. </p>
+          <h6>Dataset</h6>
+            <ul>
+              <li><a href="http://archive.ics.uci.edu/ml/datasets/PM2.5+Data+of+Five+Chinese+Cities">PM 2.5 timeseries of five Chinese cities</a></li>
+            </ul>
+          <h6>Methods</h6>
+          <p class="mb-9"> Python, HTML, JavaScript and d3 were used.</p>
+
+        </div>
+      </section>
+
+      <hr class="m-0">
+
+      <section class="resume-section p-3 p-lg-5 d-flex flex-column" id="page2">
+        <div class="my-auto">
+          <h2 class="mb-5">Model Prediction Visualization</h2>
+
+          <div class="resume-item d-flex flex-column flex-md-row mb-5">
+            <div class="resume-content mr-auto">
+                <h4 class="mb-0">Beijing PM2.5 Prediction</h4>
+            </div>
+          </div>
+          <div id="old-2">
+            <div id="Beijing">
+              <svg width="960" height="550"></svg>
+              <script>
+                var svg = d3.select("#Beijing > svg"),
+                    margin = {top: 20, right: 20, bottom: 110, left: 40},
+                    margin2 = {top: 460, right: 20, bottom: 30, left: 40},
+                    width = 960 - margin.left - margin.right,
+                    height = 550- margin.top - margin.bottom,
+                    height2 = 550 - margin2.top - margin2.bottom;
+
+                var parseDate = d3.timeParse("%m/%d/%Y %H:%M");
+
+                var x = d3.scaleTime().range([0, width]),
+                    x2 = d3.scaleTime().range([0, width]),
+                    y = d3.scaleLinear().range([height, 0]),
+                    y2 = d3.scaleLinear().range([height2, 0]);
+
+                var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat("%m/%d/%y %H:%M")),
+                    xAxis2 = d3.axisBottom(x2).tickFormat(d3.timeFormat("%m/%d/%y %H:%M")),
+                    yAxis = d3.axisLeft(y);
+
+                var brush = d3.brushX()
+                    .extent([[0, 0], [width, height2]])
+                    .on("brush end", brushed);
+
+                var zoom = d3.zoom()
+                    .scaleExtent([1, Infinity])
+                    .translateExtent([[0, 0], [width, height]])
+                    .extent([[0, 0], [width, height]])
+                    .on("zoom", zoomed);
+
+                var area = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return x(d.date); })
+                    .y(function(d) { return y(d.observed); });
+
+                var area_p = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return x(d.date); })
+                    .y(function(d) { return y(d.predicted); });
+
+
+                var area2 = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return x2(d.date); })
+                    .y(function(d) { return y2(d.observed); });
+
+                var area2_p = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return x2(d.date); })
+                    .y(function(d) { return y2(d.predicted); });
+
+
+                svg.append("defs").append("clipPath")
+                    .attr("id", "clip")
+                  .append("rect")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                var focus = svg.append("g")
+                    .attr("class", "focus")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                var context = svg.append("g")
+                    .attr("class", "context")
+                    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+
+                d3.csv("predictedData/predicted_Beijing.csv", type, function(error, data) {
+                  if (error) throw error;
+
+                  x.domain(d3.extent(data, function(d) { return d.date; }));
+                  y.domain([0, d3.max(data, function(d) { return d.predicted; })]);
+                  x2.domain(x.domain());
+                  y2.domain(y.domain());
+
+                  focus.append("path")
+                      .datum(data)
+                      .attr("class", "area")
+                      .attr("d", area);
+
+                  focus.append("path")
+                      .datum(data)
+                      .attr("class", "area_p")
+                      .attr("d", area_p);
+
+                  focus.append("g")
+                      .attr("class", "axis axis--x")
+                      .attr("transform", "translate(0," + height + ")")
+                      .call(xAxis);
+
+                  focus.append("g")
+                      .attr("class", "axis axis--y")
+                      .call(yAxis);
+
+                  context.append("path")
+                      .datum(data)
+                      .attr("class", "area")
+                      .attr("d", area2);
+
+                  context.append("path")
+                      .datum(data)
+                      .attr("class", "area_p")
+                      .attr("d", area2_p);
+
+                  context.append("g")
+                      .attr("class", "axis axis--x")
+                      .attr("transform", "translate(0," + height2 + ")")
+                      .call(xAxis2);
+
+                  context.append("g")
+                      .attr("class", "brush")
+                      .call(brush)
+                      .call(brush.move, x.range());
+
+                  svg.append("rect")
+                      .attr("class", "zoom")
+                      .attr("width", width)
+                      .attr("height", height)
+                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                      .call(zoom);
+
+
+                });
+
+                function brushed() {
+                  if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+                  var s = d3.event.selection || x2.range();
+                  x.domain(s.map(x2.invert, x2));
+                  focus.select(".area").attr("d", area);
+                  focus.select(".area_p").attr("d", area_p)
+                  focus.select(".axis--x").call(xAxis);
+                  svg.select(".zoom").call(zoom.transform, d3.zoomIdentity
+                      .scale(width / (s[1] - s[0]))
+                      .translate(-s[0], 0));
+                }
+
+                function zoomed() {
+                  if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+                  var t = d3.event.transform;
+                  x.domain(t.rescaleX(x2).domain());
+                  focus.select(".area").attr("d", area);
+                  focus.select(".axis--x").call(xAxis);
+                  context.select(".brush").call(brush.move, x.range().map(t.invertX, t));
+                }
+
+                function type(d) {
+                  d.date = parseDate(d.date);
+                  d.observed = +d.observed;
+                  d.predicted = +d.predicted;
+                  return d;
+                }
+              </script>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="resume-section p-3 p-lg-5 d-flex flex-column" id="page3">
+        <div class="my-auto">
+          <h2 class="mb-5">Conclusion</h2>
+            <div class="resume-content mr-auto">
+                <h7 class="mb-0"> The LSTM network has the advantage of dealing with categorical variables by label encoding. After training the network with 1 LSTM layer of 50 neurons for 30 epochs, the loss function converged well and dropped below 0.015. The LSTM network has outperformed the Bayesian Model according to RMSE calculated from model prediction. The LSTM network also is less time-consuming than the Bayesian approaches, due to the lengthy process of generating MCMC chains. </h7>
+            </div>
+          </div>           
+          </div>
+        </div>
+      </section>
     </div>
-  
-   </article>
-  {% endfor %}
-</div>
+  </body>
+</html>
 
-{% if paginator.total_pages > 1 %}
-<ul class="pager main-pager">
-  {% if paginator.previous_page %}
-  <li class="previous">
-    <a href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&larr; Newer Posts</a>
-  </li>
-  {% endif %}
-  {% if paginator.next_page %}
-  <li class="next">
-    <a href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/' }}">Older Posts &rarr;</a>
-  </li>
-  {% endif %}
-</ul>
-{% endif %}
+
+
+
+
+
+
+
+
