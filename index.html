@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/resume.min.css" rel="stylesheet">
 
     <script src="//d3js.org/d3.v4.min.js"></script>
@@ -17,7 +17,19 @@
 
     <style>
 
+        svg {
+                    width: 1000px;
+                    height:600px;
+            }
+
         .area {
+          fill: none;
+          stroke: #18B284;
+          stroke-width: 1.5px;
+          clip-path: url(#clip);
+        }
+
+        .area_o {
           fill: none;
           stroke: #18B284;
           stroke-width: 1.5px;
@@ -56,7 +68,10 @@
                 <a class="nav-link js-scroll-trigger" href="#page1">Overview</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#page2">Model Visualization</a>
+                <a class="nav-link js-scroll-trigger" href="#page2">Timeseries</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="#page3">Model Visualization</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link js-scroll-trigger" href="#page4">Conclusion </a>
@@ -87,23 +102,33 @@
 
       <section class="resume-section p-3 p-lg-5 d-flex flex-column" id="page2">
         <div class="my-auto">
-          <h2 class="mb-5">Model Prediction Visualization</h2>
+          <h2 class="mb-5">Timeseries</h2>
 
           <div class="resume-item d-flex flex-column flex-md-row mb-5">
             <div class="resume-content mr-auto">
-                <h4 class="mb-0">Beijing PM2.5 Prediction</h4>
+                <h4 class="mb-0">Five Cities PM 2.5 Observation</h4>
             </div>
           </div>
           <div id="old-2">
-            <div id="Beijing">
-              <svg width="960" height="550"></svg>
+            <div id="timeseries">
+              <select id="filter">
+                <option value="Beijing">Beijing</option>
+                <option value="Chengdu">Chengdu</option>
+                <option value="Guangzhou">Guangzhou</option>
+                <option value="Shanghai">Shanghai</option>
+                <option value="Shenyang">Shenyang</option>        
+              </select>
               <script>
-                var svg = d3.select("#Beijing > svg"),
-                    margin = {top: 20, right: 20, bottom: 110, left: 40},
+                var margin = {top: 20, right: 20, bottom: 110, left: 40},
                     margin2 = {top: 460, right: 20, bottom: 30, left: 40},
                     width = 960 - margin.left - margin.right,
-                    height = 550- margin.top - margin.bottom,
+                    height = 550 - margin.top - margin.bottom,
                     height2 = 550 - margin2.top - margin2.bottom;
+
+                var svg = d3.select("#timeseries").append("svg")
+                            .attr("width", width + margin.left + margin.right)
+                            .attr("height", height + margin.top + margin.bottom)
+
 
                 var parseDate = d3.timeParse("%m/%d/%Y %H:%M");
 
@@ -129,24 +154,12 @@
                 var area = d3.line()
                     .curve(d3.curveMonotoneX)
                     .x(function(d) { return x(d.date); })
-                    .y(function(d) { return y(d.observed); });
-
-                var area_p = d3.line()
-                    .curve(d3.curveMonotoneX)
-                    .x(function(d) { return x(d.date); })
-                    .y(function(d) { return y(d.predicted); });
-
+                    .y(function(d) { return y(d.pm_25); });
 
                 var area2 = d3.line()
                     .curve(d3.curveMonotoneX)
                     .x(function(d) { return x2(d.date); })
-                    .y(function(d) { return y2(d.observed); });
-
-                var area2_p = d3.line()
-                    .curve(d3.curveMonotoneX)
-                    .x(function(d) { return x2(d.date); })
-                    .y(function(d) { return y2(d.predicted); });
-
+                    .y(function(d) { return y2(d.pm_25); });
 
                 svg.append("defs").append("clipPath")
                     .attr("id", "clip")
@@ -162,12 +175,20 @@
                     .attr("class", "context")
                     .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
 
+                var csv;
 
-                d3.csv("predictedData/predicted_Beijing.csv", type, function(error, data) {
+                d3.csv("processedData/processed_allcities.csv", type, function(error, datafile) {
                   if (error) throw error;
 
+                  csv = datafile;
+
+                  var data = csv.filter(function(d) { 
+                    var sq = d3.select("#filter").property("value");
+                    return d.city === sq;
+                  });
+
                   x.domain(d3.extent(data, function(d) { return d.date; }));
-                  y.domain([0, d3.max(data, function(d) { return d.predicted; })]);
+                  y.domain([0, d3.max(data, function(d) { return d.pm_25; })]);
                   x2.domain(x.domain());
                   y2.domain(y.domain());
 
@@ -175,11 +196,6 @@
                       .datum(data)
                       .attr("class", "area")
                       .attr("d", area);
-
-                  focus.append("path")
-                      .datum(data)
-                      .attr("class", "area_p")
-                      .attr("d", area_p);
 
                   focus.append("g")
                       .attr("class", "axis axis--x")
@@ -194,11 +210,6 @@
                       .datum(data)
                       .attr("class", "area")
                       .attr("d", area2);
-
-                  context.append("path")
-                      .datum(data)
-                      .attr("class", "area_p")
-                      .attr("d", area2_p);
 
                   context.append("g")
                       .attr("class", "axis axis--x")
@@ -217,6 +228,35 @@
                       .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
                       .call(zoom);
 
+                  // add a change event handler 
+                  d3.select("#filter").on("change", function() {
+                      applyFilter(this.value);
+                    });
+
+
+                  // call this whenever the filter changes
+                  function applyFilter(value) {
+                    // filter the data
+                    var data = csv.filter(function(d) {return d.city === value;})
+
+                    x.domain(d3.extent(data, function(d) { return d.date; }));
+
+                    // update the bars
+                    d3.selectAll(".area")
+                      .datum(data)
+                      .transition().duration(1000);
+
+                    d3.selectAll(".brush")
+                      .call(brush)
+                      .call(brush.move, x.range())
+                      .transition().duration(1000);
+
+                    d3.selectAll(".zoom")
+                      .call(zoom)
+                      .transition().duration(1000);
+
+                  }
+
 
                 });
 
@@ -225,7 +265,6 @@
                   var s = d3.event.selection || x2.range();
                   x.domain(s.map(x2.invert, x2));
                   focus.select(".area").attr("d", area);
-                  focus.select(".area_p").attr("d", area_p)
                   focus.select(".axis--x").call(xAxis);
                   svg.select(".zoom").call(zoom.transform, d3.zoomIdentity
                       .scale(width / (s[1] - s[0]))
@@ -243,6 +282,225 @@
 
                 function type(d) {
                   d.date = parseDate(d.date);
+                  d.pm_25 = +d.pm_25;
+                  return d;
+                }
+
+
+              </script>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="resume-section p-3 p-lg-5 d-flex flex-column" id="page3">
+        <div class="my-auto">
+          <h2 class="mb-5">Model Prediction Visualization</h2>
+
+          <div class="resume-item d-flex flex-column flex-md-row mb-5">
+            <div class="resume-content mr-auto">
+                <h4 class="mb-0">Five Cities PM2.5 Prediction</h4>
+            </div>
+          </div>
+          <div id="old-2">
+            <div id="Beijing">
+              <select id="filter2">
+                <option value="predicted_Beijing">Predict Beijing</option>
+                <option value="predicted_Chengdu">Predict Chengdu</option>
+                <option value="predicted_Guangzhou">Predict Guangzhou</option>
+                <option value="predicted_Shanghai">Predict Shanghai</option>
+                <option value="predicted_Shenyang">Predict Shenyang</option>        
+              </select>
+              <script>
+                var margin = {top: 20, right: 20, bottom: 110, left: 40},
+                    margin2 = {top: 460, right: 20, bottom: 30, left: 40},
+                    width = 960 - margin.left - margin.right,
+                    height = 550- margin.top - margin.bottom,
+                    height2 = 550 - margin2.top - margin2.bottom;
+
+                var predictGroup = d3.select("#Beijing").append("svg")
+                            .attr("width", width + margin.left + margin.right)
+                            .attr("height", height + margin.top + margin.bottom)
+
+                var parseDate = d3.timeParse("%m/%d/%Y %H:%M");
+
+                var xPredict = d3.scaleTime().range([0, width]),
+                    x2Predict = d3.scaleTime().range([0, width]),
+                    y = d3.scaleLinear().range([height, 0]),
+                    y2 = d3.scaleLinear().range([height2, 0]);
+
+                var xAxisPredict = d3.axisBottom(xPredict).tickFormat(d3.timeFormat("%m/%d/%y %H:%M")),
+                    xAxis2Predict = d3.axisBottom(x2Predict).tickFormat(d3.timeFormat("%m/%d/%y %H:%M")),
+                    yAxis = d3.axisLeft(y);
+
+                var brushPredict = d3.brushX()
+                    .extent([[0, 0], [width, height2]])
+                    .on("brush end", brushedPredict);
+
+                var zoomPredict = d3.zoom()
+                    .scaleExtent([1, Infinity])
+                    .translateExtent([[0, 0], [width, height]])
+                    .extent([[0, 0], [width, height]])
+                    .on("zoom", zoomedPredict);
+
+                var area_o = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return xPredict(d.date); })
+                    .y(function(d) { return y(d.observed); });
+
+                var area_p = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return xPredict(d.date); })
+                    .y(function(d) { return y(d.predicted); });
+
+
+                var area2_o = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return x2Predict(d.date); })
+                    .y(function(d) { return y2(d.observed); });
+
+                var area2_p = d3.line()
+                    .curve(d3.curveMonotoneX)
+                    .x(function(d) { return x2Predict(d.date); })
+                    .y(function(d) { return y2(d.predicted); });
+
+
+                predictGroup.append("defs").append("clipPath")
+                    .attr("id", "clip")
+                  .append("rect")
+                    .attr("width", width)
+                    .attr("height", height);
+
+                var focusPredict = predictGroup.append("g")
+                    .attr("class", "focus")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                var contextPredict = predictGroup.append("g")
+                    .attr("class", "context")
+                    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+
+                d3.csv("predictedData/predicted_allcities.csv", type2, function(error, datafile2) {
+                  if (error) throw error;
+
+                  csv2 = datafile2;
+
+                  var data2 = csv2.filter(function(d) { 
+                    var sq2 = d3.select("#filter2").property("value");
+                    return d.city === sq2;
+                  });
+
+                  xPredict.domain(d3.extent(data2, function(d) { return d.date; }));
+                  y.domain([0, d3.max(data2, function(d) { return d.predicted; })]);
+                  x2Predict.domain(xPredict.domain());
+                  y2.domain(y.domain());
+
+                  focusPredict.append("path")
+                      .datum(data2)
+                      .attr("class", "area_o")
+                      .attr("d", area_o);
+
+                  focusPredict.append("path")
+                      .datum(data2)
+                      .attr("class", "area_p")
+                      .attr("d", area_p);
+
+                  focusPredict.append("g")
+                      .attr("class", "axis axis--x")
+                      .attr("transform", "translate(0," + height + ")")
+                      .call(xAxisPredict);
+
+                  focusPredict.append("g")
+                      .attr("class", "axis axis--y")
+                      .call(yAxis);
+
+                  contextPredict.append("path")
+                      .datum(data2)
+                      .attr("class", "area_o")
+                      .attr("d", area2_o);
+
+                  contextPredict.append("path")
+                      .datum(data2)
+                      .attr("class", "area_p")
+                      .attr("d", area2_p);
+
+                  contextPredict.append("g")
+                      .attr("class", "axis axis--x")
+                      .attr("transform", "translate(0," + height2 + ")")
+                      .call(xAxis2Predict);
+
+                  contextPredict.append("g")
+                      .attr("class", "brush")
+                      .call(brushPredict)
+                      .call(brushPredict.move, xPredict.range());
+
+                  predictGroup.append("rect")
+                      .attr("class", "zoom")
+                      .attr("width", width)
+                      .attr("height", height)
+                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                      .call(zoomPredict);
+
+                  // add a change event handler 
+                  d3.select("#filter2").on("change", function() {
+                      applyFilter2(this.value);
+                    });
+
+
+                  // call this whenever the filter changes
+                  function applyFilter2(value) {
+                    // filter the data
+                    var data2 = csv2.filter(function(d) {return d.city === value;})
+
+                    xPredict.domain(d3.extent(data2, function(d) { return d.date; }));
+
+                    // update the bars
+                    d3.selectAll(".area_o")
+                      .datum(data2)
+                      .transition().duration(1000);
+
+                    d3.selectAll(".area_p")
+                      .datum(data2)
+                      .transition().duration(1000);
+
+                    d3.selectAll(".brush")
+                      .call(brushPredict)
+                      .call(brushPredict.move, xPredict.range())
+                      .transition().duration(1000);
+
+                    d3.selectAll(".zoom")
+                      .call(zoomPredict)
+                      .transition().duration(1000);
+
+                  }
+
+
+                });
+
+                function brushedPredict() {
+                  if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+                  var s = d3.event.selection || x2Predict.range();
+                  xPredict.domain(s.map(x2Predict.invert, x2Predict));
+                  focusPredict.select(".area_o").attr("d", area_o);
+                  focusPredict.select(".area_p").attr("d", area_p)
+                  focusPredict.select(".axis--x").call(xAxisPredict);
+                  predictGroup.select(".zoom").call(zoom.transform, d3.zoomIdentity
+                      .scale(width / (s[1] - s[0]))
+                      .translate(-s[0], 0));
+                }
+
+                function zoomedPredict() {
+                  if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+                  var t = d3.event.transform;
+                  xPredict.domain(t.rescaleX(x2Predict).domain());
+                  focusPredict.select(".area_o").attr("d", area_o);
+                  focusPredict.select(".axis--x").call(xAxisPredict);
+                  contextPredict.select(".brush").call(brushPredict.move, xPredict.range().map(t.invertX, t));
+                }
+
+                function type2(d) {
+                  d.date = parseDate(d.date);
                   d.observed = +d.observed;
                   d.predicted = +d.predicted;
                   return d;
@@ -253,17 +511,23 @@
         </div>
       </section>
 
-      <section class="resume-section p-3 p-lg-5 d-flex flex-column" id="page3">
+      <section class="resume-section p-3 p-lg-5 d-flex flex-column" id="page4">
         <div class="my-auto">
           <h2 class="mb-5">Conclusion</h2>
             <div class="resume-content mr-auto">
                 <h7 class="mb-0"> The LSTM network has the advantage of dealing with categorical variables by label encoding. After training the network with 1 LSTM layer of 50 neurons for 30 epochs, the loss function converged well and dropped below 0.015. The LSTM network has outperformed the Bayesian Model according to RMSE calculated from model prediction. The LSTM network also is less time-consuming than the Bayesian approaches, due to the lengthy process of generating MCMC chains. </h7>
+
             </div>
           </div>           
           </div>
         </div>
       </section>
     </div>
+
+  <script src="jquery/jquery.min.js"></script>
+  <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="jquery-easing/jquery.easing.min.js"></script>
+  <script src="js/resume.min.js"></script>
   </body>
 </html>
 
